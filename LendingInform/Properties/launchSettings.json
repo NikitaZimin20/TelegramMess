@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LendingInform": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

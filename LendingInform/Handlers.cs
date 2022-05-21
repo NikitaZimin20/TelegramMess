@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
-
 using Telegram.Bot.Types.Enums;
-using DataWorker;
 using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -18,7 +16,7 @@ namespace LendingInform
 
     class Handlers
     {
-        private static SqlCrud _sql = new SqlCrud();
+        private static SqlCrud _sql = new SqlCrud(GetDescription("Default"));
         private static string _lastmsg = string.Empty;
 
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)

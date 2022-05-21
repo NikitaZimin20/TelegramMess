@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
-using DataWorker;
 using System.Collections.Generic;
 namespace LendingInform
 {

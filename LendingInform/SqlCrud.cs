@@ -1,4 +1,4 @@
-﻿using DataWorker.Models;
+﻿using LendingInform.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace DataWorker
+namespace LendingInform
 {
    public class SqlCrud
     {
