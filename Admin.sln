@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32106.194
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LendingInform", "LendingInform\LendingInform.csproj", "{5DDA3FB3-8F35-4E00-9807-9BE3671FFF60}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWorker", "SqliteDataAccess\DataWorker.csproj", "{2C8C0801-8A1C-4C3A-92F5-728E04C488AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5DDA3FB3-8F35-4E00-9807-9BE3671FFF60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5DDA3FB3-8F35-4E00-9807-9BE3671FFF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DDA3FB3-8F35-4E00-9807-9BE3671FFF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5DDA3FB3-8F35-4E00-9807-9BE3671FFF60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C8C0801-8A1C-4C3A-92F5-728E04C488AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C8C0801-8A1C-4C3A-92F5-728E04C488AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C8C0801-8A1C-4C3A-92F5-728E04C488AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C8C0801-8A1C-4C3A-92F5-728E04C488AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {82F0B444-BBCD-4416-9808-518D793E3A4C}
+	EndGlobalSection
+EndGlobal
