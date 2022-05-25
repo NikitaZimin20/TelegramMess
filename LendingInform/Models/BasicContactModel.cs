@@ -12,5 +12,7 @@ namespace LendingInform.Models
         public string TelergamUsers { get; set; }
         public long ChatId { get; set; }
         public bool IsAdmin { get; set; }
+        public string PublicName { get; set; }
+        public string PrivateName { get; set; }
     }
 }

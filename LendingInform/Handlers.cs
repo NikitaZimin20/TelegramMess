@@ -10,6 +10,7 @@ using Telegram.Bot.Types.Enums;
 using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using LendingInform.Models;
 
 namespace LendingInform
 {
@@ -17,7 +18,7 @@ namespace LendingInform
     class Handlers
     {
         private static SqlCrud _sql = new SqlCrud(GetDescription("Default"));
-        private static string _lastmsg = string.Empty;
+        private static Commands _command;
 
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
@@ -57,94 +58,66 @@ namespace LendingInform
         
         private static async Task TextMessage(ITelegramBotClient botClient, Update update)
         {
-            
-                string[] mes = update.Message.Text.Split();
-                var statement = _sql.CheckExistance(update.Message.From.Username).FirstOrDefault(x => x.IsIDExist == true);
-
-                if (!statement.Equals(null))
-                {
-                    var action = mes[0] switch
+                    string[] mes = update.Message.Text.Split();
+                    var action = mes[0] switch  
                     {
-                        "/start" => GetStart(botClient, update.Message),
-                        "/startreciving" => botClient.SendTextMessageAsync(update.Message.Chat.Id, GetDescription("StartReciving").ToString()),
-                        "/stopreciving" => botClient.SendTextMessageAsync(update.Message.Chat.Id, GetDescription("StopReciving").ToString()),
-                        "Admin" => GetAdminPanel(botClient, update.Message),
-                        "/adduser"=>AddNewUser(botClient,update.Message),
+                        "/start" => SendStartMessages(botClient, update.Message),
+                        "/help"=>AdminController(botClient,update.Message, GetDescription("Help")),
+                        "/public" => AdminController(botClient, update.Message, GetDescription("Rules"),Commands.SendPublic),
+                        "/private"=> AdminController(botClient, update.Message, GetDescription("Rules"), Commands.SendPublic),
+                        "/add"=>AdminController(botClient, update.Message, "Введите имя удаляемого пользователя", Commands.Add),
+                        "/delete"=> AdminController(botClient, update.Message, "Введите имя удаляемого пользователя", Commands.Delete),
+                        "/addadmin"=>AdminController(botClient,update.Message,"Введите имя админа",Commands.AddAdmin),
+                        "/getpublic"=>AdminController(botClient,update.Message,string.Join(Environment.NewLine,_sql.GetPublicUsersName().Select(x=>x.PublicName))),
+                        "/getprivate" => AdminController(botClient, update.Message, string.Join(Environment.NewLine, _sql.GetPrivateUsersName().Select(x => x.PrivateName))),
                         _ => SendUnknowMessage(botClient, update.Message)
                     };
                     await action;
-                }
-                else
-                {
-                    await botClient.SendTextMessageAsync(update.Message.Chat.Id, text: GetDescription("Unregister").ToString());
-                }
-            
         }
-
-        private static async Task AddNewUser(ITelegramBotClient botClient, Message message)
+        
+        private static async Task AdminController(ITelegramBotClient botClient, Message message,string text,Commands command=Commands.None)
         {
-            var statement = _sql.GetAdmin().FirstOrDefault(x => x.IsAdmin == true);
+            var statement = _sql.IsAdmin().FirstOrDefault(x => x.IsAdmin == true);
             if (statement != null)
             {
-                _lastmsg = "adduser";
-                botClient.SendTextMessageAsync(message.Chat.Id,"Напишите никнейм добовляемого юзера");
+              _command = command;
+              
+              await  botClient.SendTextMessageAsync(message.Chat.Id, text);
 
             }
-            
-            else botClient.SendTextMessageAsync(message.Chat.Id, "У вас нет таких прав");
+
+            else await botClient.SendTextMessageAsync(message.Chat.Id, "У вас нет таких прав");
         }
-
-        private static async Task MediaMessage(ITelegramBotClient botClient, Update update)
+        private static async Task PostController(ITelegramBotClient botClient, Message message)
         {
-            if (_lastmsg == "Admin")
-            {
-                await SendPost(botClient, update.Message);
+            if (_command == Commands.SendPublic)
+                await SendPost(botClient, message, _sql.GetPublicUsersId());
 
-            }
+            else if (_command == Commands.SendPrivate)
+
+                await SendPost(botClient, message, _sql.GetPrivateUsersId());
             else
-            {
-               await botClient.SendTextMessageAsync(update.Message.Chat.Id, "Данное сообщение не является командой");
-            }
+                await botClient.SendTextMessageAsync(message.Chat.Id, "Данное сообщение не является командой");
+            
         }
         private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Update update)
         {
             var messagetypes = update.Message.Type switch
             {
                 MessageType.Text=>TextMessage(botClient,update),
-                MessageType.Photo=>MediaMessage(botClient,update),
-                MessageType.Document=> MediaMessage(botClient, update),
-                MessageType.Video=> MediaMessage(botClient, update),
+                MessageType.Photo=>PostController(botClient,update.Message),
+                MessageType.Document=> PostController(botClient, update.Message),
+                MessageType.Video=> PostController(botClient, update.Message),
                 _=>botClient.SendTextMessageAsync(update.Message.Chat.Id,"Мы не принимаем такой тип сообщений")
             };
-            
-           
-           
-
+            await messagetypes;
         }
-        
-        private static async Task GetAdminPanel(ITelegramBotClient botClient, Message message)
+        private static async Task SendPost(ITelegramBotClient botClient, Message message, List<BasicContactModel> chat)
         {
-            var statement = _sql.GetAdmin().FirstOrDefault(x => x.IsAdmin == true);
-            if (statement != null)
-            {
-                _lastmsg = message.Text;
-
-                await botClient.SendTextMessageAsync(message.Chat.Id, 
-                    GetDescription("Rules").ToString() );
-            }
-            else
-            {
-                await botClient.SendTextMessageAsync(message.Chat.Id, "Неизвестная комманда");
-            }
-
-
-        }
-        private static async Task SendPost(ITelegramBotClient botClient, Message message)
-        {
-            var items = _sql.GetAllChats();
+            var items = chat;
             foreach (var item in items)
             {
-
+                
                 if (message.Type == MessageType.Photo)
                 {
                     var file = await botClient.GetFileAsync(message.Photo[message.Photo.Length - 1].FileId);
@@ -158,71 +131,72 @@ namespace LendingInform
                     var file = await botClient.GetFileAsync(message.Video.FileId);
                     await botClient.SendVideoAsync(item.ChatId, file.FileId, supportsStreaming: true, caption: message.Caption);
                 }
-                    
                 else
                 {
                     var file = await botClient.GetFileAsync(message.Document.FileId);
                     await botClient.SendDocumentAsync(item.ChatId, file.FileId, caption: message.Caption);
                 }
-
+                Thread.Sleep(1000);
             }
             
         }
         private static async Task SendUnknowMessage(ITelegramBotClient botClient, Message message)
         {
-            if (_lastmsg == "Admin")
+            if (_command==Commands.SendPublic||_command==Commands.SendPrivate)
             {
-                 await SendPost(botClient,message);
+                PostController(botClient, message);
             }
-            else if (_lastmsg == "adduser")
+           else  if (_command == Commands.Add)
             {
                 _sql.AddNewUser(message.Text);
-                botClient.SendTextMessageAsync(message.Chat.Id, "Пользователь записан");
+               await botClient.SendTextMessageAsync(message.Chat.Id, "Пользователь записан");
                 
+            }
+            else if (_command==Commands.Delete)
+            {
+                _sql.DeleteUser(message.Text);
+                await botClient.SendTextMessageAsync(message.Chat.Id, "Пользователь удален");
+            }
+            else if (_command==Commands.AddAdmin)
+            {
+                _sql.AddAdmin(message.Text);
+                await botClient.SendTextMessageAsync(message.Chat.Id, "Админ добавлен");
             }
             else
                 await botClient.SendTextMessageAsync(message.Chat.Id, "по всем вопросам обращайтесь в тех поддержку");
         }
     
-        private static async Task GetStart(ITelegramBotClient botClient, Message message)
+        private static async Task SendStartMessages(ITelegramBotClient botClient, Message message)
         {
             _sql.AddChatId(message.Chat.Id, message.From.Username);
+          
             string namereplacer = GetDescription("Introdaction").Replace("[имя]", message.From.FirstName);
             var ob =new string[] { "Hello", "Results", "Doit", "SeeU",  };
             await botClient.SendTextMessageAsync(message.Chat.Id, text: namereplacer);
             foreach (var item in ob)
             {
-                Thread.Sleep(10000);
+
+                if (item=="Doit")
+                {
+                    using (var saveImageStream = new FileStream("file.jpg", FileMode.Open))
+                    {
+                       
+                        await botClient.SendPhotoAsync(message.Chat.Id, saveImageStream, caption: message.Caption);
+
+                    }
+                 
+                }
+                Thread.Sleep(4000);
                 await botClient.SendTextMessageAsync(message.Chat.Id, text: GetDescription(item).ToString());
             }
-            
-
         }
-        private static async Task UnknownUpdateHandlerAsync(ITelegramBotClient botClient, Update update)
-        {
-
-            Console.WriteLine("Неизвестная ошибка чел");
-
-        }
-        public static dynamic LoadJson()
-        {
-            dynamic array;
-            using (StreamReader r = new StreamReader("Configuration.json"))
-            {
-
-                string json = r.ReadToEnd();
-                array = JsonConvert.DeserializeObject(json);
-            }
-            return array;
-        }
+        private static async Task UnknownUpdateHandlerAsync(ITelegramBotClient botClient, Update update)=> Console.WriteLine("Неизвестная ошибка чел");
         private static string GetDescription(string message)
         {
            
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("Configuration.json");
             var config = builder.Build();
             var items= config[message];
-
-
             return items ;
         }
        
