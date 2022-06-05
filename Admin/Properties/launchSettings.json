@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Admin": {
-      "commandName": "Project",
-      "remoteDebugEnabled": false
-    }
-  }
-}
