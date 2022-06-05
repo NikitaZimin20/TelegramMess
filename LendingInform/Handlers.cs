@@ -77,6 +77,7 @@ namespace LendingInform
         
         private static async Task AdminController(ITelegramBotClient botClient, Message message,string text,Commands command=Commands.None)
         {
+           
             var statement = _sql.IsAdmin().FirstOrDefault(x => x.IsAdmin == true);
             if (statement != null)
             {
@@ -169,7 +170,7 @@ namespace LendingInform
         private static async Task SendStartMessages(ITelegramBotClient botClient, Message message)
         {
             _sql.AddChatId(message.Chat.Id, message.From.Username);
-          
+           
             string namereplacer = GetDescription("Introdaction").Replace("[имя]", message.From.FirstName);
             var ob =new string[] { "Hello", "Results", "Doit", "SeeU",  };
             await botClient.SendTextMessageAsync(message.Chat.Id, text: namereplacer);
